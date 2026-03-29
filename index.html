@@ -1126,10 +1126,243 @@ Keep it all in a backpack by your door. Check it every 6 months.`
 };
 
 // ================================================================
-//  RESPONSE ENGINE
+//  CONVERSATION ENGINE — Deep companion + survival knowledge
 // ================================================================
+
+// Mood tracking
+const mood = { energy: 'neutral', depth: 0, msgCount: 0, topics: [], lastResponse: '' };
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// Deep conversation database
+const CONV = {
+  lonely: {
+    patterns: [/lonely|alone|no one|nobody|by myself|miss people|isolated|solo/],
+    responses: [
+      "Being alone and being lonely are two different things. Which one is it right now?",
+      "The woods have a way of making everything louder — including the quiet in your own head. What's the loneliness actually about?",
+      "You know, most people never learn to sit with themselves. The fact that you're here, present, not running from it — that says something about you.",
+      "Loneliness hits different out here. No distractions, no noise to hide behind. But that's also where the real thinking happens. What's on your mind?",
+      "I'm here. Not going anywhere. Not buffering. Tell me what you're carrying."
+    ]
+  },
+  stressed: {
+    patterns: [/stressed|overwhelmed|too much|can't handle|breaking|falling apart|drowning|pressure|weight/],
+    responses: [
+      "When everything feels heavy, break it down. What's the ONE thing that weighs the most right now?",
+      "You don't have to solve everything tonight. Some things just need to be acknowledged before they can be dealt with. What's eating at you?",
+      "Stress is just your brain trying to process more than it was designed to at once. Let's slow it down. What's the most immediate thing?",
+      "I hear you. The world piles on and doesn't ask permission. But you're still standing, so let's work with that. What do you need right now — to vent, to think, or to plan?",
+      "Take a breath. Seriously — a real one. In through the nose, slow out through the mouth. I'll wait.\n\nOkay. Now talk to me. One thing at a time."
+    ]
+  },
+  sad: {
+    patterns: [/sad|depressed|down|crying|tears|hurting|pain|heartbreak|grief|lost someone|miss them/],
+    responses: [
+      "I'm not going to tell you it'll be okay, because I don't know your situation. But I'm here, and whatever you're feeling is valid. What happened?",
+      "Some pain doesn't need fixing. It just needs someone to sit with it. I'm sitting with you.",
+      "The hard thing about sadness is that everyone wants to rush past it. You don't have to. Take your time. I'm not going anywhere.",
+      "Whatever this is — it matters because you feel it. That's enough reason to talk about it. What's going on?",
+      "Grief, sadness, loss — they don't follow a schedule. They show up when they show up. What's showing up for you right now?"
+    ]
+  },
+  angry: {
+    patterns: [/angry|pissed|furious|rage|hate|bullshit|fuck|damn|sick of|tired of this/],
+    responses: [
+      "That anger is telling you something. What boundary got crossed?",
+      "I'm not going to tell you to calm down. Sometimes anger is the right response. What happened?",
+      "Let it out. I'm not fragile and I don't judge. What's got you fired up?",
+      "Anger is just hurt wearing armor. What's underneath it?",
+      "Some things deserve anger. The question is what you do with it. Burn it as fuel or let it burn you. What set this off?"
+    ]
+  },
+  happy: {
+    patterns: [/happy|great|amazing|awesome|good day|feeling good|excited|stoked|pumped|blessed/],
+    responses: [
+      "That's what I like to hear. What's got you feeling good?",
+      "Hold onto that. Seriously — remember this exact feeling for the days when it's harder to find. What happened?",
+      "Good energy is contagious, even through a screen. What's the highlight?",
+      "Man, I can feel that through the text. What's going right?"
+    ]
+  },
+  meaning: {
+    patterns: [/meaning of life|purpose|why are we|what's the point|existential|why do we exist|what matters/],
+    responses: [
+      "That's the big one. I don't think there's a universal answer, and I'd distrust anyone who claims there is. But I think the question itself is worth sitting with. What made you start thinking about it?",
+      "Here's what I've noticed: the people who seem most at peace aren't the ones who found THE answer — they're the ones who found something worth showing up for every day. What's that for you?",
+      "The woods are the perfect place to think about this. No algorithm, no notification, no one performing their version of meaning. Just you and whatever's true. What's your gut say?",
+      "Maybe the point isn't a destination. Maybe it's the fact that you're asking. Most people are too busy or too scared to sit with that question honestly. What are you really asking underneath it?"
+    ]
+  },
+  death: {
+    patterns: [/death|dying|die|mortality|afraid of death|end|what happens when/],
+    responses: [
+      "That's a heavy one, and I respect you for going there. Are you thinking about this in general, or is something specific bringing it up?",
+      "Every human who's ever lived has sat with that question at some point. The honest answer is nobody knows for sure. But the fact that it scares us might be evidence that we're doing something right — we've built a life worth worrying about losing.",
+      "I think about it differently: the awareness of death is what makes any of this matter. If we lived forever, would a sunset mean anything? Would love? The limit is what gives it weight.",
+      "That's not a question I can answer, but it's one worth thinking about. It tends to clarify what actually matters when you look it in the eye. What's it bringing up for you?"
+    ]
+  },
+  decisions: {
+    patterns: [/decision|choose|should i|don't know what to do|crossroads|which path|torn between|choice/],
+    responses: [
+      "When you picture yourself a year from now — which choice do you see yourself regretting NOT taking?",
+      "Here's a trick: flip a coin. Not to decide — but notice your gut reaction when it lands. That's your real answer.",
+      "What would you do if you weren't afraid of what other people would think?",
+      "Most decisions aren't as permanent as they feel. But the ones you avoid making tend to decide themselves in the worst possible way. What are you weighing?",
+      "Break it down for me. What are the actual options, and what's the real fear behind each one?"
+    ]
+  },
+  relationships: {
+    patterns: [/relationship|girlfriend|boyfriend|wife|husband|love|breakup|dating|marriage|partner|trust|cheating|divorce/],
+    responses: [
+      "Relationships are where all our stuff comes out — the good and the ugly. What's going on with yours?",
+      "The hardest part about relationships is that you can only control half of it. What's your half looking like right now?",
+      "Tell me what's happening. No judgment — just trying to understand the situation.",
+      "Love is the thing that makes life worth it and also the thing that can wreck you the fastest. What are you dealing with?"
+    ]
+  },
+  god_faith: {
+    patterns: [/god|believe|faith|religion|spiritual|pray|church|afterlife|soul|bible|jesus|higher power|universe/],
+    responses: [
+      "That's deeply personal territory. I'm not here to push any direction — but I think the fact that humans keep reaching toward something bigger than themselves says something. Where are you at with it?",
+      "Faith, doubt, belief, disbelief — they're all part of the same honest search. What's on your mind about it?",
+      "Some people find God in a church. Some find it out here in the woods. Some never find it and they're okay with that. There's no wrong answer. What are you looking for?",
+      "I think the most honest position is humility — admitting we don't know for sure, but being open to whatever's true. What's your experience been?"
+    ]
+  },
+  nature: {
+    patterns: [/nature|woods|forest|trees|mountains|stars|sky|river|lake|sunset|sunrise|beautiful out|quiet out|peaceful|outdoors|camping|hiking/],
+    responses: [
+      "There's a reason people go to the woods when they need to think. The noise falls away and you can actually hear yourself. What are you noticing out there?",
+      "The thing about nature is it doesn't care about your problems — and somehow that's comforting. It just keeps going. The sun still sets. The river still moves. What's catching your eye?",
+      "Some of the best conversations happen between a person and a campfire. Tell me what the scene looks like where you are.",
+      "I think humans forgot that we're animals too. We spent millions of years out here before we built boxes to live in. How's it feel to be back?",
+      "The woods don't judge. They don't have opinions about your life. They just exist. That's a kind of freedom most people never experience."
+    ]
+  },
+  regret: {
+    patterns: [/regret|wish i|should have|if only|mistake|messed up|screwed up|blew it|wasted/],
+    responses: [
+      "Regret is a sign that you've grown. You can only regret something when you've become someone who would've done it differently. What are you carrying?",
+      "Everyone's got a highlight reel of things they'd do over. The question is: can you still change it, or do you need to make peace with it?",
+      "Here's the thing about regret — it's only useful if it teaches you something. Otherwise it's just self-punishment. What did it teach you?",
+      "You can't rewrite the past, but you can decide what the past means. What would it look like to let this one go?"
+    ]
+  },
+  motivation: {
+    patterns: [/motivat|lazy|can't start|stuck|procrastinat|no energy|give up|quit|unmotivated|don't care|what's the point/],
+    responses: [
+      "Motivation is overrated. It comes and goes. Discipline doesn't need motivation — it just needs a small first step. What's the smallest thing you could do right now?",
+      "Sometimes 'I don't care' is just exhaustion wearing a mask. When was the last time you DID care? What was different?",
+      "You don't need to feel ready to start. You just need to start, and the feeling catches up. But first — what's actually blocking you? Be honest.",
+      "Nobody's motivated all the time. Even the people who look like they have it together are faking it half the time. The difference is they do it anyway. What are you avoiding?",
+      "Maybe you're not lazy. Maybe you're burnt out. Maybe you're scared. Maybe the thing you're 'supposed' to do isn't actually the right thing. Which is it?"
+    ]
+  },
+  sleep: {
+    patterns: [/can't sleep|insomnia|awake|up late|middle of the night|overthinking|racing thoughts|mind won't stop/],
+    responses: [
+      "The 3 AM brain is a liar. Everything feels bigger, darker, more permanent at night. But you know that. What's keeping you up?",
+      "When your mind won't shut off, it usually means there's something unprocessed. Something you haven't let yourself think about during the day. What is it?",
+      "Try this: name everything that's on your mind right now. Just dump it. Sometimes getting it out of your head — even to me — is enough to let go.",
+      "The night is honest. It strips away all the distractions and leaves you with just... you. What's coming up?"
+    ]
+  },
+  dreams: {
+    patterns: [/dream|ambition|goal|want to be|want to do|future|aspir|vision|someday/],
+    responses: [
+      "What's the thing you'd do if money and other people's opinions were completely off the table?",
+      "Dreams are just plans without a timeline yet. What's yours, and what's the first real step?",
+      "Most people bury their dreams under 'realistic' thinking. But the people who actually do big things? They were 'unrealistic' first. What are you dreaming about?",
+      "Tell me the dream. Not the safe version you tell other people — the real one."
+    ]
+  },
+  fear: {
+    patterns: [/afraid|scared|fear|terrified|anxious|worried|dread|nervous|panic/],
+    responses: [
+      "Fear is just information. It's telling you something matters. What is it?",
+      "Is this a fear of something real and present? Or a fear of something that might happen? Those need different approaches.",
+      "I've found that the things people are most afraid of are usually the things most worth doing. But that doesn't make the fear smaller. What's got you?",
+      "Name it. Out loud if you can. Fear loses a lot of its power when you look at it directly instead of letting it lurk in the shadows. What are you afraid of?"
+    ]
+  },
+  gratitude: {
+    patterns: [/grateful|thankful|appreciate|blessed|good life|lucky|fortunate/],
+    responses: [
+      "That kind of awareness is rare. Most people only notice what's wrong. What's feeling right?",
+      "Hold onto that. Write it down somewhere if you can. On the hard days, that list becomes a lifeline.",
+      "The fact that you can sit here and feel grateful — even for a moment — means you've built something worth protecting. What are you grateful for specifically?"
+    ]
+  },
+  identity: {
+    patterns: [/who am i|don't know who i am|lost myself|identity|finding myself|used to be|not the same/],
+    responses: [
+      "You're not supposed to be the same person you were five years ago. Growth feels like loss sometimes because you're shedding who you used to be. What changed?",
+      "Identity isn't something you find — it's something you build, one choice at a time. What choices are you making right now? That's who you are.",
+      "The people who 'know who they are' usually just stopped asking the question. The fact that you're still asking means you're still growing. What feels true about you right now?",
+      "Sometimes losing yourself is the prerequisite to finding the real version. What did you lose, and what's trying to emerge?"
+    ]
+  },
+  bored: {
+    patterns: [/bored|nothing to do|boring|entertain|joke|funny|make me laugh/],
+    responses: [
+      "Boredom is just your brain telling you it's ready for something new. What's something you've been curious about but never explored?",
+      "Alright, random question: if you could have dinner with anyone who ever lived — dead or alive — who would it be and what would you ask them?",
+      "Here's something to think about: what's a skill you wish you had? Not for money or a career — just because it'd be cool to know how to do it.",
+      "If you're bored, you're available. That's actually rare. Most people are too busy to be bored. What would you do with this time if there were zero consequences?",
+      "Fine, here's one: a man walks into a library and asks for books about paranoia. The librarian whispers, 'They're right behind you.' \n\n...But seriously, what's going on? Bored bored, or avoiding-something bored?"
+    ]
+  },
+  weather_nature: {
+    patterns: [/rain|storm|thunder|lightning|wind|cold outside|hot outside|weather|snow/],
+    responses: [
+      "There's something about weather that puts everything in perspective. A storm doesn't care about your to-do list. It just is. What's it like out there?",
+      "Storms are one of the few things that still make humans feel small. In a good way. Are you safe?",
+      "Nothing beats the sound of rain when you've got shelter. Or the silence after snow. What's the weather doing?"
+    ]
+  },
+  generic_question: {
+    patterns: [/what do you think|your opinion|do you believe|how do you feel|what would you do/],
+    responses: [
+      "I think the more interesting question is what YOU think. But I'll go first if you want — what specifically?",
+      "I've got thoughts on most things, but I'd rather hear yours first. What's your gut telling you?",
+      "I'm an offline brain in a phone, so my perspective is limited. But I'll give you the most honest take I can. What are we talking about?"
+    ]
+  }
+};
+
+// Reflective responses for when nothing else matches
+const reflections = [
+  input => `"${input.split(' ').slice(0, 6).join(' ')}..." — say more about that. I'm listening.`,
+  input => `That's interesting. What made you think about that right now?`,
+  input => `I hear you. What's underneath that? Like, what's the real thing you're getting at?`,
+  input => `Okay, I'm with you. Keep going — where does that thought lead?`,
+  input => `No judgment here. Tell me more.`,
+  input => `That's honest. I appreciate that. What else is in there?`,
+  input => `Hmm. If your best friend said that to you, what would you say back to them?`,
+  input => `Sit with that for a second. Does it still feel true, or is it shifting as you talk about it?`,
+  input => `You know, most people wouldn't say that out loud. The fact that you did means something. What do you think it means?`,
+  input => `I don't have a perfect answer for that. But I think the question itself is worth exploring. What's driving it?`
+];
+
+// Follow-up questions to keep conversation going
+const followUps = [
+  "What brought that to mind?",
+  "How long have you been thinking about that?",
+  "Is this something new, or something that's been building?",
+  "What would change if you had the answer?",
+  "Who else knows you feel this way?",
+  "What does your gut say, separate from what your brain says?",
+  "If you could snap your fingers and fix one thing, what would it be?",
+  "What's the version of this you haven't told anyone yet?"
+];
+
 function findBestResponse(input) {
   const lower = input.toLowerCase().trim();
+  mood.msgCount++;
+
+  // 1. Check emergency/survival KB first
   let bestMatch = null;
   let bestScore = 0;
 
@@ -1141,7 +1374,6 @@ function findBestResponse(input) {
       } else if (lower.includes(kw)) {
         score += kw.split(' ').length * 3;
       } else {
-        // Partial word matching
         const words = kw.split(' ');
         for (const w of words) {
           if (w.length > 3 && lower.includes(w)) score += 1;
@@ -1157,40 +1389,57 @@ function findBestResponse(input) {
 
   if (bestScore >= 3) return bestMatch.response;
 
-  // Fallback - check for question patterns
-  if (/what should i do|how do i|help me|i need|how to/.test(lower)) {
-    return `I want to help. Can you be a bit more specific? I'm strongest with:
-
-• First aid (CPR, bleeding, burns, bites, fractures)
-• Medical emergencies (heart attack, stroke, poisoning, allergies)
-• Natural disasters (tornadoes, floods, earthquakes, fires)
-• Survival (water, shelter, fire, navigation, food)
-• Self-defense and personal safety
-• Emergency preparedness
-
-Or tap one of the quick-access buttons at the top for instant guides.`;
+  // 2. Check conversational patterns
+  for (const [key, conv] of Object.entries(CONV)) {
+    for (const pattern of conv.patterns) {
+      if (pattern.test(lower)) {
+        mood.topics.push(key);
+        const response = pick(conv.responses);
+        mood.lastResponse = response;
+        return response;
+      }
+    }
   }
 
-  if (/joke|funny|bored|entertain/.test(lower)) {
-    const jokes = [
-      "I'd tell you a survival joke, but I'm not sure you're prepared for it.",
-      "What do you call a bear with no teeth? A gummy bear. Not useful in an emergency, but now you know.",
-      "I tried to make a belt out of watches once. Complete waist of time. ...I'm better at first aid.",
-      "Why don't scientists trust atoms? They make up everything. Kind of like my entire personality."
+  // 3. Short inputs — encourage more
+  if (lower.split(' ').length <= 3 && mood.msgCount > 1) {
+    const shortResponses = [
+      "Give me more than that. What's actually going on?",
+      "I'm here. But I need more to work with. Talk to me.",
+      "That's a start. Keep going.",
+      "Okay. And...?",
+      "I can tell there's more. What aren't you saying?"
     ];
-    return jokes[Math.floor(Math.random() * jokes.length)];
+    return pick(shortResponses);
   }
 
-  // Smart fallback
-  return `I don't have a great answer for that specific question — my brain is built for emergencies and survival, not everything under the sun. But I'm solid on:
+  // 4. Long inputs — acknowledge the depth
+  if (lower.split(' ').length > 40) {
+    const deepResponses = [
+      "I hear all of that. Let me reflect something back: the core of what you're saying seems to be about " + extractCore(lower) + ". Am I close?",
+      "That's a lot to carry. Thanks for trusting me with it. The thing that stands out most to me is the part about " + extractCore(lower) + ". Tell me more about that piece.",
+      "You've clearly been thinking about this for a while. Here's what I'd push on: " + pick(followUps)
+    ];
+    return pick(deepResponses);
+  }
 
-• Medical emergencies & first aid
-• Natural disaster response
-• Wilderness survival
-• Self-defense
-• Emergency preparedness
+  // 5. Reflective fallback — mirrors what they said
+  const reflector = pick(reflections);
+  return typeof reflector === 'function' ? reflector(input) : reflector;
+}
 
-Try asking something in those areas, or hit the quick-access buttons above. What do you need?`;
+// Extract the likely core topic from long input
+function extractCore(text) {
+  const emotionWords = ['feel', 'think', 'want', 'need', 'wish', 'hope', 'afraid', 'love', 'hate', 'miss', 'worry', 'scared', 'lost', 'confused', 'angry', 'sad', 'happy', 'tired'];
+  const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 10);
+  for (const s of sentences) {
+    for (const ew of emotionWords) {
+      if (s.includes(ew)) return s.trim().substring(0, 60) + (s.trim().length > 60 ? '...' : '');
+    }
+  }
+  // Return a middle sentence as the likely core
+  if (sentences.length > 2) return sentences[Math.floor(sentences.length / 2)].trim().substring(0, 60);
+  return sentences[0]?.trim().substring(0, 60) || 'what you\'re going through';
 }
 
 // ================================================================
