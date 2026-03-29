@@ -35,9 +35,11 @@
 body {
   font-family: 'Inter', -apple-system, sans-serif;
   background: var(--bg); color: var(--text);
-  height: 100vh; height: 100dvh;
-  display: flex; flex-direction: column;
+  margin: 0; padding: 0;
   overflow: hidden;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  display: flex; flex-direction: column;
   padding-top: env(safe-area-inset-top);
 }
 
@@ -156,6 +158,7 @@ body {
   background: var(--surface);
   border-top: 1px solid var(--border);
   display: flex; gap: 8px; flex-shrink: 0;
+  width: 100%;
 }
 
 .input-area input {
@@ -2608,14 +2611,9 @@ document.getElementById('chatInput').addEventListener('keydown', e => {
 
 addMessage(`Hey. I'm Lifeline — fully offline, always ready.
 
-💬 Chat — Ask about survival, first aid, emergencies, or just talk. I remember our conversations.
-🔧 Tools — Morse code, compass, flashlight/SOS, timers, sun & moon calculator.
-📋 Prep — Emergency kit checklist, 72-hour plan builder, scenario drills.
-📡 Nearby — Experimental Bluetooth mesh messaging.
+Use the tabs below to explore Tools, Prep, and Nearby. Try "journal", "debate me", or "tell me a story".
 
-Say "journal" to write a thought. "Debate me" to sharpen your thinking. "Tell me a story" for campfire tales.
-
-Tap the emergency buttons above for instant guides. Or just tell me what's on your mind.`, false);
+What's on your mind?`, false);
 
 
 
