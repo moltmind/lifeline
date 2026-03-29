@@ -1,4 +1,4 @@
-const CACHE_NAME = 'lifeline-v1';
+const CACHE_NAME = 'lifeline-v2';
 const ASSETS = [
   './',
   './index.html',
