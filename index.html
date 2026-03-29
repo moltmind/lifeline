@@ -868,16 +868,7 @@ body {
 </div>
 
 <div id="tab-prep" class="tab-panel">
-  <div class="prep-container">
-    <div class="prep-tabs">
-      <button class="prep-tab-btn active" onclick="switchPrepTab('kit')">Emergency Kit</button>
-      <button class="prep-tab-btn" onclick="switchPrepTab('plan')">72-Hour Plan</button>
-      <button class="prep-tab-btn" onclick="switchPrepTab('drills')">Scenario Drills</button>
-    </div>
-    <div id="prep-kit" class="prep-tab-content active"></div>
-    <div id="prep-plan" class="prep-tab-content"></div>
-    <div id="prep-drills" class="prep-tab-content"></div>
-  </div>
+  <!-- Content injected by initPrepTab() when user clicks Prep tab -->
 </div>
 
 <div id="tab-nearby" class="tab-panel">
@@ -3436,7 +3427,7 @@ function switchTab(tab) {
   } else if (tab === 'prep') {
     tabPrep.classList.add('active');
     if (!window._prepInitialized) {
-      initPrepSystem();
+      initPrepTab();
       window._prepInitialized = true;
     }
   } else if (tab === 'nearby') {
@@ -3914,27 +3905,56 @@ const PREP_CSS = `
   }
 
   .kit-categories {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
   }
 
   .kit-category {
     background: var(--surface2);
     border: 1px solid var(--border);
-    border-radius: 0.75rem;
-    padding: 1.5rem;
+    border-radius: 12px;
+    overflow: hidden;
   }
 
   .kit-category-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    padding: 14px 16px;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.15s;
+  }
+
+  .kit-category-header:hover {
+    background: rgba(255,255,255,0.03);
+  }
+
+  .kit-category-header::before {
+    content: '▸';
+    color: var(--accent);
+    font-size: 14px;
+    margin-right: 10px;
+    transition: transform 0.2s;
+  }
+
+  .kit-category.open .kit-category-header::before {
+    transform: rotate(90deg);
+  }
+
+  .kit-items-wrapper {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  .kit-category.open .kit-items-wrapper {
+    max-height: 2000px;
   }
 
   .kit-category-title {
-    font-size: 1.1rem;
+    font-size: 1rem;
     font-weight: 600;
     color: var(--accent);
   }
@@ -4588,33 +4608,41 @@ function renderEmergencyKit() {
   const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
 
   let html = `
-    <div class="kit-header">
-      <div class="kit-householdsize">
-        <label for="household-size">People in household:</label>
-        <input type="number" id="household-size" min="1" max="20" value="${PREP_STORE.kit.households}">
-      </div>
-      <div class="kit-overall-progress">
-        <div class="progress-bar-container">
-          <div class="progress-bar" style="width: ${percentage}%"></div>
+    <div style="margin-bottom:16px;">
+      <h2 style="font-size:18px;font-weight:700;margin-bottom:6px;color:var(--text);">Emergency Kit Checklist</h2>
+      <p style="font-size:13px;color:var(--text2);line-height:1.5;margin-bottom:12px;">Track what you have and what you still need. Tap a category to expand it. Check off items as you gather them.</p>
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+        <div class="kit-householdsize">
+          <label for="household-size">Household:</label>
+          <input type="number" id="household-size" min="1" max="20" value="${PREP_STORE.kit.households}">
         </div>
-        <span class="progress-text">Overall: ${percentage}% Complete (${completed}/${total})</span>
+        <div class="kit-overall-progress">
+          <div class="progress-bar-container" style="width:140px;">
+            <div class="progress-bar" style="width: ${percentage}%"></div>
+          </div>
+          <span class="progress-text">${percentage}% — ${completed}/${total} items</span>
+        </div>
       </div>
     </div>
 
     <div class="kit-categories">
   `;
 
+  const catIcons = {'Water':'💧','Food':'🍞','First Aid':'🩹','Tools':'🔧','Shelter':'⛺','Documents':'📄','Communication':'📻','Clothing':'👕','Hygiene':'🧼'};
+
   for (const [category, items] of Object.entries(PREP_STORE.kit.items)) {
     const catCompleted = items.filter((i) => i.completed).length;
     const catPercent = items.length > 0 ? Math.round((catCompleted / items.length) * 100) : 0;
+    const icon = catIcons[category] || '📦';
 
     html += `
-      <div class="kit-category">
+      <div class="kit-category" onclick="this.classList.toggle('open')">
         <div class="kit-category-header">
-          <span class="kit-category-title">${category}</span>
-          <span class="kit-category-percent">${catPercent}%</span>
+          <span class="kit-category-title">${icon} ${category}</span>
+          <span class="kit-category-percent" style="background:${catPercent===100?'var(--accent-dim)':'var(--surface)'};padding:3px 8px;border-radius:6px;font-size:12px;color:${catPercent===100?'var(--accent)':'var(--text2)'}">${catCompleted}/${items.length}</span>
         </div>
-        <div class="kit-items-list">
+        <div class="kit-items-wrapper" onclick="event.stopPropagation()">
+        <div class="kit-items-list" style="padding:0 16px 16px;">
     `;
 
     for (const item of items) {
@@ -4634,9 +4662,10 @@ function renderEmergencyKit() {
 
     html += `
         </div>
-        <div class="kit-add-custom">
+        <div class="kit-add-custom" style="padding:0 16px 16px;">
           <input type="text" class="kit-add-input" placeholder="Add custom item..." data-category="${category}">
           <button class="kit-add-btn" data-category="${category}">Add</button>
+        </div>
         </div>
       </div>
     `;
@@ -5992,7 +6021,8 @@ const PREP_HTML = `
 `;
 
 function initPrepTab() {
-  const container = document.getElementById('prep-tab') || document.body;
+  const container = document.getElementById('tab-prep');
+  if (!container) return;
   container.innerHTML = PREP_HTML;
 
   // Tab switching
@@ -6019,19 +6049,9 @@ function initPrepTab() {
   initScenarioDrills();
 }
 
-// Auto-init if DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', initPrepTab);
-} else {
-  initPrepTab();
-}
-
+// DO NOT auto-init — we call initPrepSystem() when user clicks the Prep tab
 // Export for integration
-window.PREP_LAYER = {
-  initPrepTab,
-  PREP_CSS,
-  PREP_HTML,
-};
+window.PREP_LAYER = { initPrepTab, PREP_CSS, PREP_HTML };
 
 
 // ================================================================
