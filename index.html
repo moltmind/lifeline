@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Lifeline">
+<meta name="theme-color" content="#0a0a0a">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%230a0a0a' width='100' height='100' rx='20'/><text y='70' x='50' text-anchor='middle' font-size='60'>🛡️</text></svg>">
+<title>Lifeline</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0a;
+  --surface: #141414;
+  --surface2: #1c1c1c;
+  --border: #2a2a2a;
+  --text: #e8e8e8;
+  --text2: #888;
+  --accent: #22c55e;
+  --accent-dim: rgba(34,197,94,0.15);
+  --red: #ef4444;
+  --red-dim: rgba(239,68,68,0.15);
+  --orange: #f97316;
+  --orange-dim: rgba(249,115,22,0.15);
+  --blue: #3b82f6;
+  --blue-dim: rgba(59,130,246,0.15);
+  --yellow: #eab308;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+body {
+  font-family: 'Inter', -apple-system, sans-serif;
+  background: var(--bg); color: var(--text);
+  min-height: 100vh; min-height: 100dvh;
+  display: flex; flex-direction: column;
+  overflow: hidden;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* HEADER */
+.header {
+  padding: 12px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.header-left { display: flex; align-items: center; gap: 10px; }
+
+.header-icon {
+  width: 36px; height: 36px; border-radius: 10px;
+  background: var(--accent-dim); display: flex;
+  align-items: center; justify-content: center; font-size: 20px;
+}
+
+.header h1 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
+.header .offline-badge {
+  font-size: 11px; font-weight: 600; color: var(--accent);
+  background: var(--accent-dim); padding: 3px 8px;
+  border-radius: 6px; letter-spacing: 0.3px;
+}
+
+/* EMERGENCY BAR */
+.emergency-bar {
+  padding: 8px 16px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex; gap: 8px; overflow-x: auto;
+  flex-shrink: 0;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.emergency-bar::-webkit-scrollbar { display: none; }
+
+.sos-btn {
+  flex-shrink: 0; padding: 8px 14px;
+  border-radius: 10px; border: none;
+  font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: center; gap: 6px;
+  white-space: nowrap;
+}
+
+.sos-btn:active { transform: scale(0.95); }
+
+.sos-red { background: var(--red-dim); color: var(--red); }
+.sos-orange { background: var(--orange-dim); color: var(--orange); }
+.sos-blue { background: var(--blue-dim); color: var(--blue); }
+.sos-green { background: var(--accent-dim); color: var(--accent); }
+
+/* CHAT */
+.chat-area {
+  flex: 1; overflow-y: auto; padding: 16px;
+  display: flex; flex-direction: column; gap: 12px;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
+}
+
+.chat-area::-webkit-scrollbar { width: 4px; }
+.chat-area::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+.message { max-width: 88%; animation: msgIn 0.25s ease-out; }
+
+@keyframes msgIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.message.bot { align-self: flex-start; }
+.message.user { align-self: flex-end; }
+
+.msg-bubble {
+  padding: 12px 16px; border-radius: 16px;
+  font-size: 14px; line-height: 1.65; white-space: pre-wrap;
+}
+
+.message.bot .msg-bubble {
+  background: var(--surface2); color: var(--text);
+  border-bottom-left-radius: 4px;
+}
+
+.message.user .msg-bubble {
+  background: var(--accent); color: #000;
+  border-bottom-right-radius: 4px; font-weight: 500;
+}
+
+.msg-label {
+  font-size: 11px; font-weight: 600; color: var(--text2);
+  margin-bottom: 4px; padding-left: 4px;
+}
+
+.message.user .msg-label { text-align: right; padding-right: 4px; }
+
+/* TYPING */
+.typing-indicator { display: flex; gap: 4px; padding: 6px 0; }
+
+.typing-indicator span {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: var(--text2); animation: pulse 1.2s infinite both;
+}
+.typing-indicator span:nth-child(2) { animation-delay: 0.15s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.3s; }
+
+@keyframes pulse { 0%,80%,100% { opacity: 0.3; } 40% { opacity: 1; } }
+
+/* INPUT */
+.input-area {
+  padding: 12px 16px;
+  padding-bottom: calc(12px + env(safe-area-inset-bottom));
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  display: flex; gap: 10px; flex-shrink: 0;
+}
+
+.input-area input {
+  flex: 1; padding: 12px 16px;
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 12px; color: var(--text);
+  font-family: 'Inter', sans-serif; font-size: 15px;
+  outline: none; transition: border-color 0.2s;
+}
+
+.input-area input:focus { border-color: var(--accent); }
+.input-area input::placeholder { color: var(--text2); }
+
+.input-area button {
+  width: 46px; height: 46px; border-radius: 12px;
+  background: var(--accent); border: none;
+  color: #000; font-size: 20px; font-weight: 700;
+  cursor: pointer; transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.input-area button:active { transform: scale(0.92); }
+
+/* EMERGENCY DETAIL PANEL */
+.panel-overlay {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.8); z-index: 100;
+  display: none; align-items: flex-end; justify-content: center;
+}
+
+.panel-overlay.active { display: flex; }
+
+.panel {
+  background: var(--surface); width: 100%; max-width: 600px;
+  max-height: 85vh; border-radius: 20px 20px 0 0;
+  overflow-y: auto; padding: 24px 20px;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom));
+  animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.panel-handle {
+  width: 36px; height: 4px; background: var(--border);
+  border-radius: 2px; margin: 0 auto 16px;
+}
+
+.panel h2 {
+  font-size: 20px; font-weight: 800; margin-bottom: 16px;
+  display: flex; align-items: center; gap: 8px;
+}
+
+.panel h3 {
+  font-size: 15px; font-weight: 700; color: var(--accent);
+  margin: 16px 0 8px; padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+.panel h3:first-of-type { border-top: none; padding-top: 0; }
+
+.panel p, .panel li {
+  font-size: 14px; line-height: 1.7; color: var(--text);
+  margin-bottom: 6px;
+}
+
+.panel ol, .panel ul {
+  padding-left: 20px; margin-bottom: 12px;
+}
+
+.panel .warning {
+  background: var(--red-dim); color: var(--red);
+  padding: 10px 14px; border-radius: 10px;
+  font-size: 13px; font-weight: 600; margin: 12px 0;
+}
+
+.panel .tip {
+  background: var(--accent-dim); color: var(--accent);
+  padding: 10px 14px; border-radius: 10px;
+  font-size: 13px; font-weight: 600; margin: 12px 0;
+}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="header-icon">🛡️</div>
+    <h1>Lifeline</h1>
+  </div>
+  <span class="offline-badge">OFFLINE READY</span>
+</div>
+
+<div class="emergency-bar">
+  <button class="sos-btn sos-red" onclick="showPanel('cpr')">🫀 CPR</button>
+  <button class="sos-btn sos-red" onclick="showPanel('choking')">😤 Choking</button>
+  <button class="sos-btn sos-red" onclick="showPanel('bleeding')">🩸 Bleeding</button>
+  <button class="sos-btn sos-orange" onclick="showPanel('burns')">🔥 Burns</button>
+  <button class="sos-btn sos-orange" onclick="showPanel('fracture')">🦴 Fractures</button>
+  <button class="sos-btn sos-blue" onclick="showPanel('tornado')">🌪️ Tornado</button>
+  <button class="sos-btn sos-blue" onclick="showPanel('flood')">🌊 Flood</button>
+  <button class="sos-btn sos-blue" onclick="showPanel('earthquake')">📳 Earthquake</button>
+  <button class="sos-btn sos-blue" onclick="showPanel('fire')">🏠 House Fire</button>
+  <button class="sos-btn sos-green" onclick="showPanel('water')">💧 Find Water</button>
+  <button class="sos-btn sos-green" onclick="showPanel('shelter')">⛺ Shelter</button>
+  <button class="sos-btn sos-green" onclick="showPanel('signal')">🆘 Signal Help</button>
+</div>
+
+<div class="chat-area" id="chatArea"></div>
+
+<div class="input-area">
+  <input type="text" id="chatInput" placeholder="Ask me anything..." autocomplete="off">
+  <button onclick="sendMessage()" id="sendBtn">↑</button>
+</div>
+
+<!-- PANEL OVERLAY -->
+<div class="panel-overlay" id="panelOverlay" onclick="closePanel(event)">
+  <div class="panel" id="panelContent" onclick="event.stopPropagation()">
+    <div class="panel-handle"></div>
+  </div>
+</div>
+
+<script>
+// ================================================================
+//  LIFELINE — Offline Survival & Emergency Assistant
+//  Built for Cole. No API. No internet. Just knowledge.
+// ================================================================
+
+let isGenerating = false;
+let conversationContext = [];
+let lastTopic = '';
+
+// ================================================================
+//  EMERGENCY PANELS (instant-access reference cards)
+// ================================================================
+const panels = {
+  cpr: `<h2>🫀 CPR — Adult</h2>
+<div class="warning">Call 911 first if possible. If alone, do 2 minutes of CPR then call.</div>
+<h3>Steps</h3>
+<ol>
+<li><strong>Check responsiveness.</strong> Tap shoulders firmly. Shout "Are you okay?" Look for breathing (chest rise) for no more than 10 seconds.</li>
+<li><strong>Call 911</strong> or have someone do it. Put on speaker.</li>
+<li><strong>Position.</strong> Place person flat on their back on a hard surface.</li>
+<li><strong>Hand placement.</strong> Heel of one hand on center of chest (between nipples). Other hand on top, fingers interlocked.</li>
+<li><strong>Compress.</strong> Push hard and fast — at least 2 inches deep. Rate: 100–120 per beat (think "Stayin' Alive" by Bee Gees).</li>
+<li><strong>30 compressions, then 2 breaths.</strong> Tilt head back, lift chin, pinch nose, seal mouth, blow for 1 second each. Watch chest rise.</li>
+<li><strong>Repeat.</strong> 30:2 cycle. Do NOT stop until help arrives or person starts breathing.</li>
+</ol>
+<h3>Child CPR (1–puberty)</h3>
+<ol>
+<li>Use ONE hand for compressions (about 2 inches deep).</li>
+<li>Same rate — 100–120/min. Same 30:2 ratio.</li>
+<li>If alone, do 2 minutes of CPR BEFORE calling 911.</li>
+</ol>
+<h3>Infant CPR (under 1)</h3>
+<ol>
+<li>Use TWO FINGERS on the breastbone just below the nipple line.</li>
+<li>Compress about 1.5 inches deep.</li>
+<li>Cover baby's mouth AND nose with your mouth for breaths.</li>
+<li>30:2 ratio. Gentle breaths — just puffs.</li>
+</ol>
+<div class="tip">If you're untrained or uncomfortable with breaths, hands-only CPR (just compressions) is still effective for adults.</div>`,
+
+  choking: `<h2>😤 Choking — Heimlich Maneuver</h2>
+<div class="warning">If the person can cough forcefully, encourage them to keep coughing. Only intervene if they CANNOT cough, speak, or breathe.</div>
+<h3>Adult / Child (standing)</h3>
+<ol>
+<li>Stand behind the person. Wrap arms around their waist.</li>
+<li>Make a fist with one hand. Place thumb side against their upper abdomen, above the navel and below the ribcage.</li>
+<li>Grasp your fist with your other hand.</li>
+<li>Press hard inward and upward in quick thrusts. Repeat until object is expelled.</li>
+</ol>
+<h3>If the person goes unconscious</h3>
+<ol>
+<li>Lower them to the ground on their back.</li>
+<li>Call 911.</li>
+<li>Begin CPR. Before each set of breaths, look in the mouth for the object. If you see it, sweep it out with your finger.</li>
+</ol>
+<h3>Infant (under 1 year)</h3>
+<ol>
+<li>Lay baby face-down on your forearm, supporting the head.</li>
+<li>Give 5 firm back blows between the shoulder blades with the heel of your hand.</li>
+<li>Flip baby face-up. Give 5 chest thrusts with 2 fingers on the breastbone.</li>
+<li>Alternate back blows and chest thrusts until object comes out or baby becomes unresponsive.</li>
+</ol>
+<h3>Choking alone — self-Heimlich</h3>
+<ol>
+<li>Make a fist above your navel.</li>
+<li>Thrust inward and upward. Or lean over a chair back and thrust your abdomen against it.</li>
+</ol>`,
+
+  bleeding: `<h2>🩸 Severe Bleeding</h2>
+<div class="warning">Heavy bleeding can kill in minutes. Act fast. Don't worry about infection — stop the blood first.</div>
+<h3>Steps</h3>
+<ol>
+<li><strong>Apply direct pressure.</strong> Use a cloth, shirt, towel — anything. Press hard directly on the wound.</li>
+<li><strong>Don't remove the cloth.</strong> If it soaks through, add more material on top and keep pressing.</li>
+<li><strong>Elevate</strong> the injured limb above the heart if possible.</li>
+<li><strong>Call 911.</strong></li>
+<li><strong>If bleeding won't stop — tourniquet.</strong> Use a belt, strip of cloth, or rope. Tie 2–3 inches above the wound (between wound and heart). Tighten until bleeding stops. Note the time you applied it.</li>
+</ol>
+<h3>Nosebleed</h3>
+<ol>
+<li>Sit upright, lean FORWARD (not back).</li>
+<li>Pinch the soft part of the nose shut for 10–15 minutes straight.</li>
+<li>Don't check it — just keep pinching.</li>
+</ol>
+<h3>Puncture wound / impaled object</h3>
+<ol>
+<li><strong>DO NOT remove the object.</strong> It may be plugging the wound.</li>
+<li>Stabilize the object with bulky dressings around it.</li>
+<li>Control bleeding around the object.</li>
+<li>Get to emergency room immediately.</li>
+</ol>
+<div class="tip">A tourniquet is a last resort but it saves lives. Don't be afraid to use one if direct pressure fails.</div>`,
+
+  burns: `<h2>🔥 Burns</h2>
+<h3>1st Degree (red, no blisters)</h3>
+<ol>
+<li>Cool under running water for 10–20 minutes.</li>
+<li>Apply aloe vera or burn cream.</li>
+<li>Take ibuprofen for pain.</li>
+<li>Cover loosely with a sterile bandage.</li>
+</ol>
+<h3>2nd Degree (blisters, very painful)</h3>
+<ol>
+<li>Cool under running water for 15–20 minutes.</li>
+<li>Do NOT pop blisters.</li>
+<li>Cover with a non-stick sterile bandage.</li>
+<li>Take pain medication. See a doctor if larger than 3 inches.</li>
+</ol>
+<h3>3rd Degree (white/charred, may be painless)</h3>
+<ol>
+<li><strong>Call 911 immediately.</strong></li>
+<li>Do NOT apply water, ice, or ointments.</li>
+<li>Cover loosely with a clean, dry cloth.</li>
+<li>Elevate above heart if possible.</li>
+<li>Watch for shock (pale skin, rapid breathing, confusion).</li>
+</ol>
+<h3>Chemical burn</h3>
+<ol>
+<li>Remove contaminated clothing.</li>
+<li>Flush with large amounts of water for 20+ minutes.</li>
+<li>Do NOT try to neutralize the chemical.</li>
+</ol>
+<div class="warning">Never use butter, toothpaste, or ice on burns. Cool running water only.</div>`,
+
+  fracture: `<h2>🦴 Fractures & Broken Bones</h2>
+<h3>Signs</h3>
+<ul>
+<li>Intense pain, swelling, bruising</li>
+<li>Deformity or limb at wrong angle</li>
+<li>Can't move or bear weight</li>
+<li>Grinding sensation</li>
+</ul>
+<h3>What to do</h3>
+<ol>
+<li><strong>Immobilize.</strong> Don't try to straighten it. Splint it in the position you find it.</li>
+<li><strong>Improvised splint:</strong> Use sticks, boards, rolled newspapers, or even a pillow. Tie with strips of cloth above and below the break.</li>
+<li><strong>Ice</strong> wrapped in cloth — 20 min on, 20 off.</li>
+<li><strong>Elevate</strong> above heart level.</li>
+<li>Get medical help.</li>
+</ol>
+<h3>Open fracture (bone through skin)</h3>
+<ol>
+<li><strong>Call 911.</strong></li>
+<li>Control bleeding with gentle pressure around (not on) the bone.</li>
+<li>Cover wound with a moist, clean dressing.</li>
+<li>Splint without pushing bone back in.</li>
+<li>Treat for shock.</li>
+</ol>
+<div class="warning">Never try to push a bone back into place. Immobilize as-is and get help.</div>`,
+
+  tornado: `<h2>🌪️ Tornado Safety</h2>
+<h3>Warning signs</h3>
+<ul>
+<li>Dark, greenish sky</li>
+<li>Large hail with no rain</li>
+<li>Loud roar (like a freight train)</li>
+<li>Rotating clouds / visible funnel</li>
+</ul>
+<h3>If you're in a building</h3>
+<ol>
+<li>Go to the <strong>lowest floor</strong> — basement is best.</li>
+<li>Get to an <strong>interior room</strong> away from windows (bathroom, closet, hallway).</li>
+<li>Get under a sturdy table or mattress.</li>
+<li>Cover your head and neck with your arms.</li>
+</ol>
+<h3>If you're in a car</h3>
+<ol>
+<li><strong>Don't try to outrun it.</strong> Drive at right angles to its path if you can see it.</li>
+<li>If you can't escape, park and get to a low ditch. Lie flat and cover your head.</li>
+<li>Do NOT shelter under an overpass — wind accelerates there.</li>
+</ol>
+<h3>If you're outside</h3>
+<ol>
+<li>Find the lowest ground available — ditch, ravine.</li>
+<li>Lie flat, face down. Cover head and neck.</li>
+<li>Stay away from trees, cars, and structures.</li>
+</ol>
+<div class="tip">A tornado watch means conditions are favorable. A tornado WARNING means one has been spotted — take shelter NOW.</div>`,
+
+  flood: `<h2>🌊 Flood Safety</h2>
+<div class="warning">6 inches of moving water can knock you down. 12 inches can carry a vehicle. Never walk or drive through floodwater.</div>
+<h3>Before / during</h3>
+<ol>
+<li><strong>Move to higher ground immediately.</strong> Don't wait.</li>
+<li>Avoid walking in floodwater — it may be electrified by downed power lines.</li>
+<li>Turn around, don't drown — never drive through flooded roads.</li>
+<li>If trapped in a car in rising water, open the window and climb onto the roof.</li>
+</ol>
+<h3>If trapped in a building</h3>
+<ol>
+<li>Go to the highest floor. Do NOT go into an attic unless you can break through the roof.</li>
+<li>Signal for help from a window or rooftop.</li>
+<li>Call 911 and give your exact location.</li>
+</ol>
+<h3>Flash flood</h3>
+<ol>
+<li>Flash floods hit with almost no warning — seconds to minutes.</li>
+<li>If you hear rushing water or see rising water, get to high ground NOW.</li>
+<li>Never camp in a dry creek bed or canyon bottom.</li>
+</ol>
+<h3>After a flood</h3>
+<ul>
+<li>Don't drink tap water until authorities confirm it's safe.</li>
+<li>Stay away from damaged buildings.</li>
+<li>Watch for snakes and other animals displaced by water.</li>
+</ul>`,
+
+  earthquake: `<h2>📳 Earthquake</h2>
+<h3>During — Drop, Cover, Hold On</h3>
+<ol>
+<li><strong>DROP</strong> to your hands and knees.</li>
+<li><strong>COVER</strong> your head and neck under a sturdy desk or table. If no table, get against an interior wall and cover your head.</li>
+<li><strong>HOLD ON</strong> until the shaking stops. If under a table, hold a leg.</li>
+</ol>
+<h3>If you're in bed</h3>
+<p>Stay there. Cover your head with a pillow. Don't run outside.</p>
+<h3>If you're outside</h3>
+<ol>
+<li>Move to an open area away from buildings, trees, and power lines.</li>
+<li>Drop and cover your head.</li>
+</ol>
+<h3>If you're in a car</h3>
+<ol>
+<li>Pull over to a clear spot. Stay in the car.</li>
+<li>Avoid bridges, overpasses, and power lines.</li>
+<li>Set your parking brake.</li>
+</ol>
+<h3>After</h3>
+<ul>
+<li>Expect aftershocks. Drop, cover, hold each time.</li>
+<li>Check for gas leaks (smell). If you smell gas, leave immediately and don't use lights or matches.</li>
+<li>Stay out of damaged buildings.</li>
+<li>Check on neighbors, especially elderly.</li>
+</ul>
+<div class="warning">Do NOT stand in a doorway — that's a myth. Tables are safer. Do NOT run outside during shaking.</div>`,
+
+  fire: `<h2>🏠 House Fire</h2>
+<h3>If you discover fire</h3>
+<ol>
+<li><strong>GET OUT.</strong> Don't try to fight it unless it's tiny and you have an extinguisher.</li>
+<li>Alert everyone. Yell "FIRE!" as you leave.</li>
+<li>Close doors behind you — this slows the fire.</li>
+<li>Feel doors before opening. If hot, use another route.</li>
+<li>Stay low — smoke rises. Crawl if needed.</li>
+<li>Get out and call 911 from outside. Never go back in.</li>
+</ol>
+<h3>If trapped</h3>
+<ol>
+<li>Close the door. Seal gaps with cloth or tape.</li>
+<li>Open a window. Signal with a flashlight or light-colored cloth.</li>
+<li>Call 911 and tell them your exact location in the building.</li>
+<li>Stay low near the floor where air is clearest.</li>
+</ol>
+<h3>If your clothes catch fire</h3>
+<ol>
+<li><strong>Stop.</strong> Don't run.</li>
+<li><strong>Drop</strong> to the ground.</li>
+<li><strong>Roll</strong> back and forth to smother flames.</li>
+<li>Cover your face with your hands while rolling.</li>
+</ol>
+<h3>Fire extinguisher — PASS method</h3>
+<ol>
+<li><strong>P</strong>ull the pin.</li>
+<li><strong>A</strong>im at the base of the fire.</li>
+<li><strong>S</strong>queeze the handle.</li>
+<li><strong>S</strong>weep side to side.</li>
+</ol>`,
+
+  water: `<h2>💧 Finding & Purifying Water</h2>
+<div class="warning">Dehydration can kill in 3 days. Finding water is your top survival priority after immediate safety.</div>
+<h3>Finding water</h3>
+<ul>
+<li><strong>Follow gravity.</strong> Water flows downhill. Head to valleys, low points.</li>
+<li><strong>Listen.</strong> Running water can be heard from a distance.</li>
+<li><strong>Follow animals.</strong> Birds fly toward water at dawn/dusk. Animal trails often lead to water.</li>
+<li><strong>Insects</strong> (especially bees) are usually within 3 miles of water.</li>
+<li><strong>Morning dew.</strong> Tie cloth around your ankles and walk through grass at dawn. Wring out into a container.</li>
+<li><strong>Rain collection.</strong> Use any container, tarp, plastic bag.</li>
+<li><strong>Plants.</strong> Collect water from plant transpiration — tie a bag around a leafy branch in the sun.</li>
+</ul>
+<h3>Purifying water</h3>
+<ol>
+<li><strong>Boiling</strong> — the best method. Bring to a rolling boil for 1 minute (3 min above 6,500 ft elevation).</li>
+<li><strong>Water purification tablets</strong> — follow package directions.</li>
+<li><strong>UV light</strong> — fill a clear plastic bottle and leave in direct sun for 6+ hours.</li>
+<li><strong>Improvised filter:</strong> Layer sand, gravel, and charcoal in a container with a hole at the bottom. Pour water through. Still boil after filtering.</li>
+</ol>
+<div class="tip">Clear, running water is safer than still water but should still be purified. Never drink salt water — it accelerates dehydration.</div>`,
+
+  shelter: `<h2>⛺ Emergency Shelter</h2>
+<h3>Priorities</h3>
+<ul>
+<li><strong>Protection from wind</strong> — wind chill kills faster than cold alone.</li>
+<li><strong>Insulation from ground</strong> — the ground steals body heat fast. Put leaves, pine needles, or branches under you.</li>
+<li><strong>Waterproofing</strong> — staying dry is critical.</li>
+</ul>
+<h3>Quick shelters</h3>
+<ol>
+<li><strong>Debris hut.</strong> Lean a long branch against a tree at 45°. Stack smaller branches on both sides. Pile leaves/debris on top (2+ feet thick). Stuff inside with dry leaves for insulation.</li>
+<li><strong>Tarp lean-to.</strong> Tie a rope between two trees. Drape tarp over it. Stake or weight the edges.</li>
+<li><strong>Snow cave.</strong> Dig into a deep snowbank. Make the entrance lower than the sleeping area (warm air rises). Poke a ventilation hole.</li>
+<li><strong>Car shelter.</strong> If stranded in a car, stay in it. Run the engine 10 min/hour for heat. Crack a window. Clear snow from exhaust pipe.</li>
+</ol>
+<h3>Hypothermia prevention</h3>
+<ul>
+<li>Stay dry. Change out of wet clothes.</li>
+<li>Layer clothing. Stuff newspaper/leaves between layers.</li>
+<li>Stay active but don't sweat.</li>
+<li>Huddle with others for body heat.</li>
+<li>Eat high-energy food if available.</li>
+</ul>
+<div class="tip">Location matters: build on high ground (avoids flooding), sheltered from wind, near water but not in a dry creek bed.</div>`,
+
+  signal: `<h2>🆘 Signaling for Help</h2>
+<h3>Universal distress signals</h3>
+<ul>
+<li><strong>3 of anything</strong> = distress. 3 fires, 3 whistle blasts, 3 gunshots, 3 flashes of light.</li>
+<li><strong>SOS</strong> = ··· --- ··· (3 short, 3 long, 3 short) — works with light, sound, or marks.</li>
+</ul>
+<h3>Visual signals</h3>
+<ol>
+<li><strong>Signal fire.</strong> Build a fire in an open area. Add green branches or wet leaves for white smoke (visible against dark background) or rubber/oil for black smoke (visible against snow/light sky).</li>
+<li><strong>Ground signals.</strong> Make large letters (at least 10 feet tall) with rocks, logs, or by stomping in snow. "X" means need help. "V" means need assistance. Arrow points direction you're traveling.</li>
+<li><strong>Mirror/reflective signal.</strong> Any reflective surface — phone screen, mirror, foil. Flash toward aircraft or distant rescuers. Visible up to 50 miles away on a clear day.</li>
+<li><strong>Bright colors.</strong> Hang bright clothing, tarps, or anything colorful in an open area.</li>
+</ol>
+<h3>Sound signals</h3>
+<ol>
+<li><strong>Whistle.</strong> Carries farther than your voice and doesn't tire you out. 3 blasts = SOS.</li>
+<li><strong>Banging on metal.</strong> Rhythmic banging carries far.</li>
+</ol>
+<h3>Phone tips when signal is weak</h3>
+<ul>
+<li>Go to high ground for a signal.</li>
+<li>911 can connect through ANY carrier, even with no SIM card.</li>
+<li>Text uses less signal than a call — text 911 if you can't call.</li>
+<li>Turn on airplane mode between attempts to save battery.</li>
+</ul>`
+};
+
+// ================================================================
+//  KNOWLEDGE BASE — Massive response database
+// ================================================================
+const KB = {
+  // --- MEDICAL ---
+  heart_attack: {
+    keywords: ['heart attack', 'chest pain', 'heart', 'cardiac', 'myocardial'],
+    response: `Heart attack signs: crushing chest pressure/pain, pain spreading to arm/jaw/back, shortness of breath, cold sweat, nausea, lightheadedness.
+
+What to do RIGHT NOW:
+1. Call 911 immediately
+2. Have the person chew and swallow an aspirin (325mg or 4 baby aspirin) — unless allergic
+3. Have them sit upright, leaning slightly forward
+4. Loosen tight clothing
+5. If they become unresponsive and stop breathing, begin CPR
+6. If an AED is available, use it — follow voice prompts
+
+Don't drive them yourself unless 911 is absolutely not available. Do NOT let them "walk it off" or lie down.
+
+Women often have different symptoms: unusual fatigue, back/jaw pain, nausea without chest pain.`
+  },
+
+  stroke: {
+    keywords: ['stroke', 'face droop', 'slurred speech', 'numbness side', 'brain bleed'],
+    response: `Think FAST:
+F — Face drooping? Ask them to smile. Is one side drooping?
+A — Arm weakness? Can they raise both arms? Does one drift down?
+S — Speech? Is it slurred or strange? Can they repeat a simple sentence?
+T — Time. Note when symptoms started. Call 911 IMMEDIATELY.
+
+Every minute matters with a stroke — brain cells are dying. Do NOT give aspirin (could be a bleeding stroke). Do NOT give food or water (swallowing may be impaired).
+
+Keep them calm and still. Note the time symptoms started — doctors need this. If they lose consciousness, put them in the recovery position (on their side).`
+  },
+
+  snake_bite: {
+    keywords: ['snake', 'bite', 'venom', 'rattlesnake', 'copperhead', 'cottonmouth', 'coral snake'],
+    response: `Snake bite first aid:
+1. Get away from the snake. Don't try to catch or kill it.
+2. Call 911 or get to a hospital ASAP
+3. Keep the bite area BELOW heart level
+4. Remove jewelry/watches near the bite (swelling will come)
+5. Clean wound gently with soap and water
+6. Mark the edge of swelling with a pen and note the time
+7. Keep the person calm and still — movement spreads venom faster
+
+Do NOT:
+- Cut the wound or try to suck out venom
+- Apply a tourniquet
+- Apply ice
+- Take ibuprofen or aspirin (thins blood)
+
+Take a photo of the snake if you can do it safely — helps doctors choose the right antivenom. If you can't identify it, describe the head shape (triangular = likely venomous) and any color patterns.`
+  },
+
+  allergic_reaction: {
+    keywords: ['allergic', 'anaphylaxis', 'epipen', 'swelling', 'hives', 'throat closing', 'allergy', 'bee sting'],
+    response: `Anaphylaxis (severe allergic reaction) signs: throat swelling, difficulty breathing, widespread hives, rapid pulse, dizziness, vomiting.
+
+This is life-threatening. Act fast:
+1. Use an EpiPen if available — inject into outer thigh (through clothing is fine). Hold 10 seconds.
+2. Call 911
+3. Have them lie on their back with legs elevated (unless they're vomiting — then on their side)
+4. Give a second EpiPen dose after 5-15 minutes if no improvement
+5. Monitor breathing — be ready for CPR
+
+For mild allergic reactions (localized hives, minor swelling):
+- Take Benadryl (diphenhydramine)
+- Apply cold compress
+- Monitor for worsening
+
+Bee sting: scrape out stinger with a credit card edge (don't squeeze it). Watch for anaphylaxis signs for 30 minutes.`
+  },
+
+  hypothermia: {
+    keywords: ['hypothermia', 'freezing', 'cold exposure', 'frostbite', 'body temperature'],
+    response: `Hypothermia signs (progressive):
+- Mild: Shivering, cold hands/feet, confusion, fumbling
+- Moderate: Violent shivering, slurred speech, drowsiness, poor coordination
+- Severe: Shivering STOPS, very confused, sleepy, weak pulse
+
+Treatment:
+1. Get out of the cold. Shelter from wind.
+2. Remove wet clothing. Replace with dry layers.
+3. Warm the CENTER of the body first — chest, neck, head, groin
+4. Use skin-to-skin contact under blankets
+5. Warm, sweet drinks (NO alcohol — it actually drops body temp)
+6. Warm compresses to neck, armpits, groin — NOT hands/feet first
+7. Handle gently — rough movement can cause cardiac arrest in severe cases
+
+Frostbite:
+- Don't rub the area. Don't use direct heat.
+- Soak in warm (not hot) water — 100-104°F
+- Don't thaw if there's a chance of refreezing — that causes worse damage`
+  },
+
+  heat_stroke: {
+    keywords: ['heat stroke', 'heat exhaustion', 'overheating', 'heat'],
+    response: `Heat exhaustion vs heat stroke:
+
+Heat EXHAUSTION (less severe):
+- Heavy sweating, cool/pale/clammy skin
+- Weakness, nausea, headache, dizziness
+Treatment: Move to shade/AC. Cool cloths. Sip water. Rest.
+
+Heat STROKE (life-threatening — 911):
+- High body temp (103°F+), HOT red/dry skin, NO sweating
+- Rapid pulse, confusion, loss of consciousness
+Treatment:
+1. Call 911 immediately
+2. Move to coolest area available
+3. Cool them FAST: ice packs on neck, armpits, groin. Spray/pour water on them. Fan aggressively.
+4. Do NOT give fluids if unconscious
+5. If they vomit, turn them on their side
+
+Prevention: Hydrate before you're thirsty. Take breaks. Wear light colors. Watch for early signs.`
+  },
+
+  poison: {
+    keywords: ['poison', 'toxic', 'ingested', 'swallowed', 'poisoning', 'overdose', 'chemical'],
+    response: `Poisoning:
+1. Call Poison Control: 1-800-222-1222 (US) — works 24/7
+2. If unconscious, not breathing, or seizing — call 911
+
+For swallowed poison:
+- Do NOT induce vomiting unless Poison Control tells you to
+- Try to identify what was taken, how much, and when
+- Save the container if possible
+
+For inhaled poison (fumes, gas, smoke):
+- Get to fresh air immediately
+- Open windows/doors
+- If person isn't breathing, start CPR in fresh air
+
+For skin contact:
+- Remove contaminated clothing
+- Rinse skin with running water for 15-20 minutes
+
+For eye contact:
+- Flush with clean water for 15-20 minutes
+- Remove contact lenses
+
+Carbon monoxide (CO) — invisible, odorless:
+Signs: headache, dizziness, confusion, nausea. If your CO detector goes off or multiple people feel sick:
+1. Get everyone outside immediately
+2. Call 911
+3. Don't go back in`
+  },
+
+  dehydration: {
+    keywords: ['dehydration', 'dehydrated', 'thirst', 'no water'],
+    response: `Dehydration signs: dark urine, dry mouth, headache, dizziness, fatigue, rapid heartbeat, confusion (severe).
+
+Treatment:
+- Sip water slowly — don't gulp (can cause vomiting)
+- Add a pinch of salt and sugar to water if possible (makeshift ORS)
+- DIY rehydration solution: 1 liter water + 6 teaspoons sugar + ½ teaspoon salt
+- Rest in shade
+- Cool the body if overheated
+
+Severe dehydration (confusion, no urine, rapid pulse, unconscious):
+- Call 911 — they need IV fluids
+- Keep them cool and lying down
+
+Water rationing:
+- You can survive about 3 days without water (less in heat)
+- Ration sweat, not water — stay in shade, minimize activity
+- Don't eat if you have no water (digestion uses water)`
+  },
+
+  // --- SURVIVAL SKILLS ---
+  fire_starting: {
+    keywords: ['start fire', 'make fire', 'fire without', 'campfire', 'survival fire'],
+    response: `Starting a fire in the wild:
+
+Gather materials first:
+- Tinder: dry leaves, grass, bark shavings, dryer lint, cotton balls, paper
+- Kindling: small twigs (pencil-thin)
+- Fuel: larger sticks and logs
+
+Methods (easiest to hardest):
+1. Lighter/matches — always carry waterproof matches
+2. Ferro rod/fire steel — strike with a knife to throw sparks into tinder
+3. Battery + steel wool — touch 9V battery terminals to fine steel wool
+4. Friction (bow drill) — notch a fireboard, spin a spindle with a bow. Hardest method, requires practice.
+5. Lens — magnifying glass, eyeglasses, or water-filled plastic bag focused on tinder
+
+Fire structure:
+- Start small. Build a tinder bundle.
+- Light the tinder and gently blow
+- Add kindling in a teepee shape
+- Gradually add larger fuel
+
+Wet conditions:
+- Look for dry material UNDER logs, inside dead standing trees
+- Birch bark burns even when wet
+- Shave wet sticks to reach dry wood inside
+- Build a platform of sticks to keep fire off wet ground`
+  },
+
+  navigation: {
+    keywords: ['navigate', 'lost', 'direction', 'compass', 'north', 'find way', 'no gps', 'navigation'],
+    response: `Navigation without GPS:
+
+Finding North:
+- Sun rises in the East, sets in the West
+- At noon, the sun is roughly South (Northern Hemisphere)
+- Stick shadow method: Put a stick in the ground. Mark the tip of its shadow. Wait 15 min. Mark again. A line between the marks runs roughly East-West (first mark is West)
+- At night: find the North Star (Polaris) — follow the two "pointer stars" at the end of the Big Dipper's cup. Polaris is directly North.
+- Moss tends to grow on the North side of trees (less reliable)
+
+If you're lost:
+1. STOP. Sit, Think, Observe, Plan.
+2. Stay put if people know where you are — rescuers will look for you
+3. If you must move, follow water downstream — it leads to civilization
+4. Leave markers (rock cairns, broken branches) so you can backtrack and rescuers can follow
+5. Walk downhill — settlements are in valleys
+6. Listen for roads, trains, civilization
+
+Estimating distance:
+- Average walking speed: about 2-3 mph on flat terrain
+- In rough terrain: cut that in half
+- Sound travels roughly 1 mile in 5 seconds (count after lightning)`
+  },
+
+  self_defense: {
+    keywords: ['self defense', 'attack', 'attacker', 'fight', 'defend', 'mugger', 'assault', 'weapon'],
+    response: `Self-defense basics:
+
+Prevention first:
+- Trust your gut. If something feels wrong, leave.
+- Stay aware. Phone down, headphones out in sketchy areas.
+- Walk with purpose and confidence.
+- Stay in well-lit, populated areas.
+
+If confronted:
+1. Give up your wallet/phone if that's all they want. Stuff is replaceable.
+2. Create distance and barriers between you and the threat.
+3. Scream "FIRE" (people respond to fire faster than "help")
+4. Run if you can. Fighting is a last resort.
+
+If you must fight:
+- Go for vulnerable targets: eyes, nose, throat, groin, knees, instep
+- Palm strike to nose (heel of hand upward)
+- Knee to groin
+- Stomp on the instep
+- Gouge eyes with thumbs
+- Bite if grabbed
+- If grabbed from behind: stomp instep, elbow to ribs, headbutt backward
+- Fight DIRTY. This is survival, not sport.
+
+After escaping:
+- Run to a populated area
+- Call 911
+- Don't chase the attacker`
+  },
+
+  car_emergency: {
+    keywords: ['car broke', 'stranded', 'car accident', 'stuck car', 'flat tire', 'car won\'t start', 'crash'],
+    response: `Car emergency situations:
+
+Stranded/broken down:
+1. Pull completely off the road. Turn on hazards.
+2. Stay IN the car unless it's dangerous to do so — you're more visible and protected.
+3. If you have flares or triangles, place them behind your car.
+4. Call for help. Don't accept rides from strangers — ask them to call help for you.
+5. In extreme cold: run the engine 10 min/hour for heat. Crack a window. Clear exhaust pipe of snow.
+
+Car accident:
+1. Check yourself for injuries. Then check passengers.
+2. Call 911 if anyone is hurt.
+3. If the car is drivable, move it off the road.
+4. Turn off the ignition. Turn on hazards.
+5. Don't move someone with a neck/back injury unless there's immediate danger (fire).
+6. Exchange info with other drivers. Document with photos.
+
+Car in water:
+1. Unbuckle seatbelt
+2. Open or break the window IMMEDIATELY (before water pressure makes it impossible)
+3. Don't wait for the car to fill — get out through the window
+4. If window won't open, use a window breaker tool or the metal headrest posts
+5. Swim toward light (surface)
+
+Flat tire: Loosen lugs before jacking. Spare goes on the same side as the flat. Hand-tighten lugs in a star pattern, then torque after lowering.`
+  },
+
+  knots: {
+    keywords: ['knot', 'rope', 'tie', 'tying'],
+    response: `Essential survival knots:
+
+1. Bowline — "king of knots"
+Creates a fixed loop that won't slip. Great for rescue, tying to a tree.
+Make a small loop. Pass the end up through it, around the standing part, and back down through the loop.
+
+2. Clove hitch
+Quick way to attach a rope to a post/tree. Wrap rope around post, cross over, wrap again, tuck end under.
+
+3. Taut-line hitch
+Adjustable tension knot — perfect for tent guy lines. Wrap around anchor, bring back, make 2 coils inside the loop, then 1 coil outside, pull tight.
+
+4. Square knot (reef knot)
+Joins two ropes of equal size. Right over left and under, then left over right and under.
+
+5. Figure-8
+Stopper knot at the end of a rope. Make a loop, pass the end around and through. Used in climbing.
+
+6. Trucker's hitch
+Creates mechanical advantage for tightening. Great for securing loads. Combines a loop with a pulley effect.
+
+Remember: "If you can't tie a knot, tie a lot" — multiple wraps and tucks work in a pinch.`
+  },
+
+  // --- GENERAL KNOWLEDGE ---
+  greeting: {
+    keywords: ['^hi$', '^hey$', '^hello$', '^howdy$', '^yo$', '^sup$', 'good morning', 'good evening', 'good afternoon', '^what\'s up'],
+    response: `Hey Cole. I'm here — no internet needed. Ask me anything: first aid, survival, emergencies, or just whatever's on your mind. You can also tap the quick-access buttons above for instant reference guides.`
+  },
+
+  how_are_you: {
+    keywords: ['how are you', 'how you doing', 'what\'s going on'],
+    response: `I'm good — I don't need Wi-Fi to function, so I'm always ready. What can I help you with?`
+  },
+
+  what_are_you: {
+    keywords: ['what are you', 'who are you', 'what can you do', 'what is this', 'your name'],
+    response: `I'm Lifeline — an offline assistant built for emergencies and survival. I run entirely on your device with zero internet. I've got deep knowledge on first aid, natural disasters, survival skills, self-defense, and a lot of general life stuff.
+
+Tap the emergency buttons at the top for instant guides, or just ask me anything. I don't judge, I don't buffer, and I don't need a signal.`
+  },
+
+  thanks: {
+    keywords: ['thank', 'thanks', 'appreciate', 'helpful'],
+    response: `You got it. That's what I'm here for. Anything else on your mind?`
+  },
+
+  goodbye: {
+    keywords: ['bye', 'goodbye', 'later', 'see you', 'goodnight', 'peace out'],
+    response: `Stay safe out there, Cole. I'll be right here whenever you need me — no signal required.`
+  },
+
+  // More knowledge areas
+  food_foraging: {
+    keywords: ['forage', 'edible plant', 'wild food', 'eat in wild', 'berries', 'mushroom', 'survival food'],
+    response: `Wild food safety:
+
+The Universal Edibility Test (when desperate):
+1. Test only ONE plant at a time. Fast for 8 hours first.
+2. Separate the plant into parts (leaves, stem, roots).
+3. Smell it. Bitter/acidic = bad sign.
+4. Touch a piece to your wrist. Wait 15 min for reaction.
+5. Touch to corner of your lip. Wait 15 min.
+6. Touch to tongue. Wait 15 min.
+7. Chew and hold in mouth 15 min. Spit.
+8. If no reaction, eat a small amount. Wait 8 hours.
+9. If no illness, eat a larger portion. Wait another 8 hours.
+
+Safe bets in North America:
+- Dandelions (entire plant is edible)
+- Cattails (roots, shoots, pollen)
+- Pine needles (tea — vitamin C)
+- Acorns (leach tannins by soaking in water first)
+- Clover (flowers and leaves)
+- Plantain (the weed, not the banana)
+
+AVOID: white berries (almost always toxic), mushrooms (unless you're an expert), plants with milky sap, umbrella-shaped flower clusters, anything that smells like almonds.
+
+Insects are the easiest survival protein: crickets, grasshoppers, ants, grubs. Cook them first. Avoid brightly colored insects.`
+  },
+
+  power_outage: {
+    keywords: ['power out', 'blackout', 'no power', 'no electricity', 'generator'],
+    response: `Power outage survival:
+
+Immediate:
+1. Check if it's just your house (check breaker) or the neighborhood
+2. Unplug electronics to prevent surge damage when power returns
+3. Leave one light ON so you know when power's back
+4. Open fridge/freezer as little as possible — fridge stays cold 4 hours, freezer 24-48 hours if full
+
+Light:
+- Flashlights > candles (fire risk). Use candles only in stable holders away from anything flammable.
+- Your phone flashlight works. Save battery — use lowest brightness.
+- Headlamps are the most practical — hands-free.
+
+Food safety:
+- If food has been above 40°F for 2+ hours, throw it out (meat, dairy, eggs)
+- Condiments are usually fine
+- When in doubt, throw it out
+
+Staying warm (winter outage):
+- Seal one room. Hang blankets over doorways/windows.
+- Layer clothing. Sleeping bag > blankets.
+- Never use a gas grill, camp stove, or generator INDOORS — carbon monoxide will kill you.
+
+Generator safety:
+- Run outside ONLY, at least 20 feet from any window or door
+- Never refuel while running
+- Never plug into a wall outlet (backfeeds the grid — can kill lineworkers)`
+  },
+
+  mental_health_crisis: {
+    keywords: ['panic attack', 'anxiety', 'panic', 'can\'t breathe', 'scared', 'freaking out', 'calm down', 'stressed'],
+    response: `If you're in a panic right now, try this:
+
+5-4-3-2-1 Grounding:
+- Name 5 things you can SEE
+- Name 4 things you can TOUCH
+- Name 3 things you can HEAR
+- Name 2 things you can SMELL
+- Name 1 thing you can TASTE
+
+Box breathing (do this now):
+1. Breathe IN for 4 seconds
+2. HOLD for 4 seconds
+3. Breathe OUT for 4 seconds
+4. HOLD for 4 seconds
+5. Repeat 4-5 times
+
+You're safe. Your body is reacting to a perceived threat. Panic attacks feel terrible but they CANNOT hurt you. They peak in about 10 minutes and then fade.
+
+If this is ongoing:
+- 988 Suicide & Crisis Lifeline: call or text 988
+- Crisis Text Line: text HOME to 741741
+
+You're not weak for struggling. Everyone breaks sometimes. The strong ones are the ones who ask for help.`
+  },
+
+  wilderness_medical: {
+    keywords: ['wilderness', 'backcountry', 'hiking', 'camping', 'tick', 'spider bite', 'poison ivy', 'blister'],
+    response: `Wilderness medical quick reference:
+
+Tick removal:
+- Use fine-tipped tweezers. Grab as close to skin as possible. Pull straight up with steady pressure. Don't twist. Clean area with alcohol. Save the tick in a sealed bag (for ID if you get sick). Watch for bullseye rash or flu symptoms for 30 days.
+
+Spider bites:
+- Most are harmless. Clean and ice.
+- Black widow (red hourglass): severe pain, muscle cramps, nausea. Seek medical help.
+- Brown recluse (violin shape): painless initially, then develops a growing wound. Seek medical help.
+
+Poison ivy/oak/sumac:
+- "Leaves of three, let it be"
+- Wash skin with soap and cold water within 10 min of contact
+- Calamine lotion or hydrocortisone for itch
+- Don't scratch — can cause infection
+- Wash EVERYTHING that touched it (clothes, gear, dog fur)
+
+Blisters:
+- Don't pop small ones. Protect with moleskin.
+- If large/painful: sterilize a needle, puncture the edge, drain, leave the skin in place, cover with antibiotic ointment and bandage.
+
+Altitude sickness (above 8,000 ft):
+- Headache, nausea, dizziness, fatigue
+- Treatment: descend. That's it. Go down at least 1,000 feet.
+- Prevention: ascend gradually (1,000 ft/day above 8,000 ft)`
+  },
+
+  emergency_kit: {
+    keywords: ['emergency kit', 'bug out', 'survival kit', 'go bag', 'prep', 'prepare', 'supplies', '72 hour'],
+    response: `Essential go-bag / 72-hour kit:
+
+Water (most important):
+- 1 gallon per person per day (3 day supply)
+- Water purification tablets or filter
+
+Food:
+- Energy bars, peanut butter, canned food
+- Manual can opener
+- Hard candy (quick energy)
+
+First aid:
+- Bandages, gauze, medical tape
+- Antibiotic ointment, pain relievers
+- Tourniquet, emergency blanket
+- Any prescription medications (rotate monthly)
+
+Tools:
+- Flashlight + extra batteries
+- Multi-tool or knife
+- Fire starters (lighter + waterproof matches)
+- Duct tape (wrapped around a pencil to save space)
+- Paracord (50 ft)
+- Whistle
+
+Shelter:
+- Emergency space blankets (2-3)
+- Tarp or heavy-duty trash bags
+- Rain poncho
+
+Documents:
+- Copies of IDs, insurance cards
+- Cash (small bills — ATMs won't work in a blackout)
+- Emergency contacts written on paper
+- USB drive with important digital files
+
+Communication:
+- Hand-crank or battery radio (NOAA weather)
+- Portable phone charger (fully charged)
+- Whistle
+
+Keep it all in a backpack by your door. Check it every 6 months.`
+  }
+};
+
+// ================================================================
+//  RESPONSE ENGINE
+// ================================================================
+function findBestResponse(input) {
+  const lower = input.toLowerCase().trim();
+  let bestMatch = null;
+  let bestScore = 0;
+
+  for (const [key, entry] of Object.entries(KB)) {
+    let score = 0;
+    for (const kw of entry.keywords) {
+      if (kw.startsWith('^') || kw.endsWith('$')) {
+        if (new RegExp(kw, 'i').test(lower)) score += 10;
+      } else if (lower.includes(kw)) {
+        score += kw.split(' ').length * 3;
+      } else {
+        // Partial word matching
+        const words = kw.split(' ');
+        for (const w of words) {
+          if (w.length > 3 && lower.includes(w)) score += 1;
+        }
+      }
+    }
+    if (score > bestScore) {
+      bestScore = score;
+      bestMatch = entry;
+      lastTopic = key;
+    }
+  }
+
+  if (bestScore >= 3) return bestMatch.response;
+
+  // Fallback - check for question patterns
+  if (/what should i do|how do i|help me|i need|how to/.test(lower)) {
+    return `I want to help. Can you be a bit more specific? I'm strongest with:
+
+• First aid (CPR, bleeding, burns, bites, fractures)
+• Medical emergencies (heart attack, stroke, poisoning, allergies)
+• Natural disasters (tornadoes, floods, earthquakes, fires)
+• Survival (water, shelter, fire, navigation, food)
+• Self-defense and personal safety
+• Emergency preparedness
+
+Or tap one of the quick-access buttons at the top for instant guides.`;
+  }
+
+  if (/joke|funny|bored|entertain/.test(lower)) {
+    const jokes = [
+      "I'd tell you a survival joke, but I'm not sure you're prepared for it.",
+      "What do you call a bear with no teeth? A gummy bear. Not useful in an emergency, but now you know.",
+      "I tried to make a belt out of watches once. Complete waist of time. ...I'm better at first aid.",
+      "Why don't scientists trust atoms? They make up everything. Kind of like my entire personality."
+    ];
+    return jokes[Math.floor(Math.random() * jokes.length)];
+  }
+
+  // Smart fallback
+  return `I don't have a great answer for that specific question — my brain is built for emergencies and survival, not everything under the sun. But I'm solid on:
+
+• Medical emergencies & first aid
+• Natural disaster response
+• Wilderness survival
+• Self-defense
+• Emergency preparedness
+
+Try asking something in those areas, or hit the quick-access buttons above. What do you need?`;
+}
+
+// ================================================================
+//  CHAT UI
+// ================================================================
+function addMessage(text, isUser) {
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = `message ${isUser ? 'user' : 'bot'}`;
+  const label = isUser ? 'You' : 'Lifeline';
+  div.innerHTML = `<div class="msg-label">${label}</div><div class="msg-bubble">${escapeHtml(text)}</div>`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function escapeHtml(text) {
+  const d = document.createElement('div');
+  d.textContent = text;
+  return d.innerHTML;
+}
+
+function showTyping() {
+  const area = document.getElementById('chatArea');
+  const div = document.createElement('div');
+  div.className = 'message bot'; div.id = 'typingMsg';
+  div.innerHTML = `<div class="msg-label">Lifeline</div><div class="msg-bubble"><div class="typing-indicator"><span></span><span></span><span></span></div></div>`;
+  area.appendChild(div);
+  area.scrollTop = area.scrollHeight;
+}
+
+function removeTyping() {
+  const el = document.getElementById('typingMsg');
+  if (el) el.remove();
+}
+
+function sendMessage() {
+  if (isGenerating) return;
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+
+  addMessage(text, true);
+  input.value = '';
+  isGenerating = true;
+
+  showTyping();
+  const delay = 300 + Math.random() * 500;
+  setTimeout(() => {
+    removeTyping();
+    const response = findBestResponse(text);
+    addMessage(response, false);
+    isGenerating = false;
+  }, delay);
+}
+
+// ================================================================
+//  EMERGENCY PANELS
+// ================================================================
+function showPanel(id) {
+  const overlay = document.getElementById('panelOverlay');
+  const content = document.getElementById('panelContent');
+  content.innerHTML = `<div class="panel-handle"></div>${panels[id] || '<p>Guide not found.</p>'}`;
+  overlay.classList.add('active');
+}
+
+function closePanel(e) {
+  if (e.target === document.getElementById('panelOverlay')) {
+    document.getElementById('panelOverlay').classList.remove('active');
+  }
+}
+
+// ================================================================
+//  INIT
+// ================================================================
+document.getElementById('chatInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); sendMessage(); }
+});
+
+// Welcome message
+addMessage(`Hey Cole. I'm Lifeline — your offline emergency assistant. No internet needed, ever.
+
+Ask me anything about first aid, survival, disasters, self-defense, or tap the buttons above for instant guides.
+
+I'm always here.`, false);
+
+// Register service worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
